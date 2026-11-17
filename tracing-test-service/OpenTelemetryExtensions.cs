@@ -16,15 +16,18 @@ public static class OpenTelemetryExtensions
                 .AddConsoleExporter()
                 .AddOtlpExporter(otlp =>
                 {
-                    otlp.Endpoint = new Uri("http://localhost:4318/v1/traces");
-                    otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
                     otlp.ExportProcessorType = ExportProcessorType.Simple;
                 })
                 .ConfigureResource(rb =>
                 {
                     var name = typeof(Program).Assembly.GetName();
+                    var serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME");
+                    if (string.IsNullOrWhiteSpace(serviceName))
+                    {
+                        throw new InvalidOperationException("OTEL_SERVICE_NAME environment variable is not set.");
+                    }
                     rb.AddService(
-                        serviceName: "ke-conf-otel-mc-example-service",
+                        serviceName: serviceName,
                         serviceVersion: name.Version!.ToString(),
                         autoGenerateServiceInstanceId: true);
                     rb.AddEnvironmentVariableDetector();
